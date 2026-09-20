@@ -433,31 +433,22 @@ def fetch_jobs_from_serpapi(
     query: str,
     location: str,
 ) -> dict:
-
     """
-    Returns:
+    Search Google Jobs through SerpApi.
 
+    Returns:
     {
         "jobs": [...],
-        "status": "success" |
-                  "unavailable" |
-                  "error",
+        "status": "success" | "unavailable" | "error",
         "message": "..."
     }
-
-    Security:
-    The SerpApi API key is never printed.
-    Raw SDK exceptions are never printed.
     """
 
     if not serpapi_client:
-
         return {
             "jobs": [],
             "status": "error",
-            "message": (
-                "SerpApi is not configured."
-            ),
+            "message": "SerpApi is not configured.",
         }
 
     params = {
@@ -466,66 +457,46 @@ def fetch_jobs_from_serpapi(
         "location": location,
         "hl": "en",
         "gl": "in",
-        "api_key": SERPAPI_API_KEY,
     }
 
-    # Only one retry.
-    # This prevents the application from hanging.
-    for attempt in range(1, 2):
-
-        print(
-            f"SerpApi search attempt "
-            f"{attempt}/2"
-        )
-
+    try:
+        print("SerpApi search")
         print(f"Query: {query}")
         print(f"Location: {location}")
 
-        try:
+        results = serpapi_client.search(params)
 
-            results = serpapi_client.search(
-                params
-            )
+        # SerpApi's current Python SDK returns a SerpResults
+        # object that behaves like a dictionary.
+        jobs = results.get("jobs_results", [])
 
-            jobs = (
-                results.get("jobs_results", [])
-                if isinstance(results, dict)
-                else []
-            )
+        if not isinstance(jobs, list):
+            jobs = []
 
-            return {
-                "jobs": jobs,
-                "status": "success",
-                "message": (
-                    f"SerpApi returned "
-                    f"{len(jobs)} jobs."
-                ),
-            }
+        print(f"SerpApi returned {len(jobs)} jobs.")
 
-        except Exception as error:
+        return {
+            "jobs": jobs,
+            "status": "success",
+            "message": f"SerpApi returned {len(jobs)} jobs.",
+        }
 
-            # NEVER print str(error).
-            # It may contain the full URL and API key.
-            print(
-                "SerpApi request failed "
-                f"({type(error).__name__})"
-            )
+    except Exception as error:
+        print(
+            "SerpApi request failed "
+            f"({type(error).__name__})"
+        )
 
-            if attempt < 2:
-                time.sleep(1)
-
-    return {
-        "jobs": [],
-        "status": "unavailable",
-        "message": (
-            "Live Google Jobs search is "
-            "temporarily unavailable. "
-            "The AI search plan was created "
-            "successfully, but SerpApi did not "
-            "return live results."
-        ),
-    }
-
+        return {
+            "jobs": [],
+            "status": "unavailable",
+            "message": (
+                "Live Google Jobs search is temporarily "
+                "unavailable. The AI search plan was created "
+                "successfully, but SerpApi did not return "
+                "live results."
+            ),
+        }
 
 # =========================================================
 # JOB ANALYSIS
