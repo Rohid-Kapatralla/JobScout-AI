@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>JobScout AI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div class="logo">
+            <span>🔎</span>
+            JobScout AI
+        </div>
+
+        <div class="tagline">
+            <span>●</span>
+            AI Job Research Assistant
+        </div>
+
+    </header>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="container">
+
+
+        <!-- ================= HERO ================= -->
+
+        <section class="hero">
+
+            <div class="hero-badge">
+                ✦ AI-powered job discovery
+            </div>
+
+            <h1>
+                Find your next
+                <span>opportunity.</span>
+            </h1>
+
+            <p>
+                Search for relevant jobs using natural language,
+                discover matching skills, and explore opportunities
+                tailored to your career goals.
+            </p>
+
+            <div class="hero-features">
+
+                <span>🤖 AI-powered search</span>
+
+                <span>🔎 Live job discovery</span>
+
+                <span>⚡ Skill matching</span>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= NORMAL SEARCH ================= -->
+
+        <section class="search-card">
+
+            <div class="search-heading">
+
+                <div class="search-icon">
+                    🔎
+                </div>
+
+                <div>
+
+                    <h2>
+                        Search Jobs
+                    </h2>
+
+                    <p>
+                        Tell us what kind of opportunity you're looking for.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form id="jobForm">
+
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="role">
+                            Job Role
+                        </label>
+
+                        <input
+                            type="text"
+                            id="role"
+                            name="role"
+                            placeholder="e.g. Python Developer"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="location">
+                            Location
+                        </label>
+
+                        <input
+                            type="text"
+                            id="location"
+                            name="location"
+                            placeholder="e.g. Hyderabad"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="experience">
+                            Experience
+                        </label>
+
+                        <select
+                            id="experience"
+                            name="experience"
+                        >
+
+                            <option value="fresher">
+                                Fresher / Entry Level
+                            </option>
+
+                            <option value="0-2 years">
+                                0–2 Years
+                            </option>
+
+                            <option value="2-5 years">
+                                2–5 Years
+                            </option>
+
+                            <option value="5+ years">
+                                5+ Years
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="skills">
+                            Your Skills
+                        </label>
+
+                        <input
+                            type="text"
+                            id="skills"
+                            name="skills"
+                            placeholder="e.g. Python, Flask, SQL"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- IMPORTANT: NORMAL SEARCH BUTTON -->
+
+                <button
+                    type="submit"
+                    id="searchButton"
+                >
+                    🔍 Search Jobs
+                    <span>→</span>
+                </button>
+
+
+            </form>
+
+        </section>
+
+
+        <!-- ================= AI AGENT ================= -->
+
+        <section
+            id="agentSearchSection"
+            class="agent-section"
+        >
+
+
+            <div class="agent-header">
+
+
+                <div class="agent-icon">
+                    ✦
+                </div>
+
+
+                <div>
+
+                    <div class="agent-label">
+                        AI AGENT
+                    </div>
+
+                    <h2>
+                        Ask JobScout AI
+                    </h2>
+
+                    <p>
+                        Describe the job you're looking for in your own words.
+                        JobScout AI will understand your request and search
+                        for relevant opportunities.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXAMPLE -->
+
+            <div
+                class="agent-example"
+                id="agentExample"
+            >
+
+                <span class="example-label">
+                    TRY AN EXAMPLE
+                </span>
+
+                <span>
+                    Find fresher Python and AI/ML jobs in Hyderabad.
+                    I know Python, Flask and SQL.
+                </span>
+
+            </div>
+
+
+            <!-- QUERY -->
+
+            <textarea
+                id="agentQuery"
+                rows="4"
+                placeholder="Tell JobScout AI what kind of job you're looking for..."
+                aria-label="Describe the job you are looking for"
+            ></textarea>
+
+
+            <!-- ONLY ONE AI BUTTON -->
+
+            <button
+                id="agentSearchButton"
+                type="button"
+            >
+
+                <span class="agent-button-icon">
+                    ✦
+                </span>
+
+                <span>
+                    Ask JobScout AI
+                </span>
+
+                <span class="agent-button-arrow">
+                    →
+                </span>
+
+            </button>
+
+
+            <!-- STATUS -->
+
+            <div
+                id="agentStatus"
+                class="agent-status"
+                role="status"
+                aria-live="polite"
+            ></div>
+
+
+            <!-- AI RESULT -->
+
+            <div
+                id="agentPlan"
+                class="agent-plan"
+            ></div>
+
+
+        </section>
+
+
+        <!-- ================= LOADING ================= -->
+
+        <section
+            id="loading"
+            class="loading hidden"
+        >
+
+            <div class="spinner"></div>
+
+            <p>
+                JobScout AI is researching current opportunities...
+            </p>
+
+        </section>
+
+
+        <!-- ================= JOB RESULTS ================= -->
+
+        <section
+            id="resultsSection"
+            class="results-section hidden"
+        >
+
+            <div class="results-header">
+
+                <div>
+
+                    <h2>
+                        Job Opportunities
+                    </h2>
+
+                    <p>
+                        Live opportunities analyzed by JobScout AI
+                    </p>
+
+                </div>
+
+                <span id="jobCount"></span>
+
+            </div>
+
+
+            <div id="jobsContainer"></div>
+
+        </section>
+
+
+    </main>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+        <div class="footer-inner">
+
+            <div class="footer-brand">
+
+                <span class="footer-icon">
+                    🔎
+                </span>
+
+                <strong>
+                    JobScout AI
+                </strong>
+
+            </div>
+
+            <p>
+                AI-powered job discovery and skill matching.
+            </p>
+
+            <span>
+                Built with Python & Flask
+                • Gemini AI
+                • SerpApi
+            </span>
+
+        </div>
+
+    </footer>
+
+
+    <!-- ================= SCRIPTS ================= -->
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='agent.js') }}"></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,6 @@
+Flask
+python-dotenv
+serpapi
+google-genai
+pydantic
+requests
