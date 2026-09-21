@@ -96,6 +96,148 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             `;
 
+            if (data.search_plan) {
+
+                const plan = data.search_plan;
+
+                const planSkills =
+                    Array.isArray(plan.skills)
+                        ? plan.skills
+                        : [];
+
+                const keywords =
+                    Array.isArray(plan.search_keywords)
+                        ? plan.search_keywords
+                        : [];
+
+                html += `
+                    <div class="analysis-section search-strategy">
+
+                        <div class="analysis-section-title">
+                            🔎 AI Search Strategy
+                        </div>
+
+                        <div class="strategy-grid">
+
+                            <div class="strategy-item">
+                                <span class="strategy-label">
+                                    🎯 Role
+                                </span>
+
+                                <strong>
+                                    ${escapeHTML(
+                                        plan.job_role ||
+                                        "Not specified"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="strategy-item">
+                                <span class="strategy-label">
+                                    📍 Location
+                                </span>
+
+                                <strong>
+                                    ${escapeHTML(
+                                        plan.location ||
+                                        "Not specified"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="strategy-item">
+                                <span class="strategy-label">
+                                    👨‍💻 Experience
+                                </span>
+
+                                <strong>
+                                    ${escapeHTML(
+                                        plan.experience_level ||
+                                        "Not specified"
+                                    )}
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        ${
+                            planSkills.length
+                                ? `
+                                    <div class="strategy-detail">
+
+                                        <span class="strategy-label">
+                                            🛠 Skills considered
+                                        </span>
+
+                                        <div class="strategy-tags">
+
+                                            ${planSkills.map(
+                                                skill =>
+                                                    `
+                                                    <span>
+                                                        ${escapeHTML(skill)}
+                                                    </span>
+                                                    `
+                                            ).join("")}
+
+                                        </div>
+
+                                    </div>
+                                `
+                                : ""
+                        }
+
+                        ${
+                            keywords.length
+                                ? `
+                                    <div class="strategy-detail">
+
+                                        <span class="strategy-label">
+                                            🔍 Search keywords
+                                        </span>
+
+                                        <div class="strategy-tags keyword-tags">
+
+                                            ${keywords.map(
+                                                keyword =>
+                                                    `
+                                                    <span>
+                                                        ${escapeHTML(keyword)}
+                                                    </span>
+                                                    `
+                                            ).join("")}
+
+                                        </div>
+
+                                    </div>
+                                `
+                                : ""
+                        }
+
+                        ${
+                            plan.search_strategy
+                                ? `
+                                    <div class="strategy-reason">
+
+                                        <span class="strategy-label">
+                                            💡 Strategy
+                                        </span>
+
+                                        <p>
+                                            ${escapeHTML(
+                                                plan.search_strategy
+                                            )}
+                                        </p>
+
+                                    </div>
+                                `
+                                : ""
+                        }
+
+                    </div>
+                `;
+            }
+
             if (
                 Array.isArray(data.user_skills) &&
                 data.user_skills.length > 0

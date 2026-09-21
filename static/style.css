@@ -1146,3 +1146,90 @@ footer {
     color: #334155;
     font-weight: 700;
 }
+
+/* =========================================================
+   AI SEARCH STRATEGY
+   ========================================================= */
+
+.search-strategy {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid #e0e7ff;
+    border-radius: 12px;
+    background: #fafbff;
+}
+
+.strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.strategy-item {
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.strategy-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.strategy-item strong {
+    color: #172033;
+    font-size: 13px;
+}
+
+.strategy-detail {
+    margin-top: 14px;
+}
+
+.strategy-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 8px;
+}
+
+.strategy-tags span {
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.keyword-tags span {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.strategy-reason {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.strategy-reason p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+
+    .strategy-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
