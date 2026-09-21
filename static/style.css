@@ -1113,3 +1113,36 @@ footer {
     }
 
 }
+
+/* =========================================================
+   LIVE JOB VERIFICATION
+   ========================================================= */
+
+.job-verification {
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #f8fbff;
+}
+
+.verification-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.verification-text {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.verification-text strong {
+    color: #334155;
+    font-weight: 700;
+}
