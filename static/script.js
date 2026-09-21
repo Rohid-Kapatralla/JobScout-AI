@@ -371,12 +371,33 @@ function displayJobs(jobs, userSkills) {
 
                     </div>
 
+                  <div class="job-verification">
 
-                    <div class="job-actions">
+    <div class="verification-title">
+        🔎 Live Job Verification
+    </div>
 
-                        ${applyHtml}
+    <div class="verification-text">
+        Found through
+        <strong>
+            ${escapeHtml(
+                job.source ||
+                "Google Jobs via SerpApi"
+            )}
+        </strong>
+        .
+        Verify the employer, vacancy status, and application details
+        before submitting personal information.
+    </div>
 
-                    </div>
+</div>
+
+
+<div class="job-actions">
+
+    ${applyHtml}
+
+</div>
 
                 </article>
 

@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="analysis-header">
 
                     <div class="analysis-icon">
-                        🧠
+                        🤖
                     </div>
 
                     <div>
@@ -95,7 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 </div>
             `;
-
 
             if (
                 Array.isArray(data.user_skills) &&
@@ -127,9 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     </div>
                 `;
-
             }
-
 
             if (totalJobs > 0) {
 
@@ -165,6 +162,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 planBox.classList.add("success");
 
+                /*
+                 * Send the AI-discovered jobs to the existing
+                 * JobScout job-results renderer.
+                 */
+                renderAgentJobs(data.jobs || []);
+
             } else {
 
                 html += `
@@ -198,8 +201,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 planBox.classList.add("warning");
 
+                renderAgentJobs([]);
             }
-
 
             planBox.innerHTML = html;
 
@@ -268,6 +271,170 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
+    /*
+     * Render the jobs returned specifically by the AI Agent.
+     *
+     * This function tries to use the existing JobScout rendering
+     * function from script.js instead of creating a second,
+     * different job-card design.
+     */
+    function renderAgentJobs(jobs) {
+
+        if (!Array.isArray(jobs)) {
+            jobs = [];
+        }
+
+        /*
+         * If script.js exposes a reusable renderer, use it.
+         */
+        if (typeof window.renderJobs === "function") {
+            window.renderJobs(jobs);
+            return;
+        }
+
+        if (typeof window.displayJobs === "function") {
+            window.displayJobs(jobs);
+            return;
+        }
+
+        if (typeof window.renderJobResults === "function") {
+            window.renderJobResults(jobs);
+            return;
+        }
+
+        /*
+         * Fallback:
+         * locate the existing job-results container and render
+         * simple cards if no global renderer exists.
+         */
+        const resultsContainer =
+            document.getElementById("jobResults") ||
+            document.getElementById("jobsResults") ||
+            document.querySelector(".jobs-grid") ||
+            document.querySelector(".job-results");
+
+        if (!resultsContainer) {
+            console.warn(
+                "JobScout AI: Could not find the existing job results container."
+            );
+            return;
+        }
+
+        if (jobs.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <h3>No matching jobs found</h3>
+                    <p>
+                        Try another role, skill, or location.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        resultsContainer.innerHTML = jobs.map(function (job) {
+
+            const title =
+                job.title ||
+                job.job_title ||
+                "Job Opportunity";
+
+            const company =
+                job.company_name ||
+                job.company ||
+                "Company not specified";
+
+            const location =
+                job.location ||
+                "Location not specified";
+
+            const description =
+                job.description ||
+                "No job description available.";
+
+            const applyLink =
+                getApplyLink(job);
+
+            return `
+                <article class="job-card">
+
+                    <div class="job-card-header">
+
+                        <div>
+                            <h3>
+                                ${escapeHTML(title)}
+                            </h3>
+
+                            <p class="job-company">
+                                ${escapeHTML(company)}
+                            </p>
+
+                            <p class="job-location">
+                                📍 ${escapeHTML(location)}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div class="job-description">
+                        ${escapeHTML(description)}
+                    </div>
+
+                    <div class="job-card-footer">
+
+                        ${
+                            applyLink
+                            ? `
+                                <a
+                                    class="apply-button"
+                                    href="${escapeAttribute(applyLink)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    View & Apply →
+                                </a>
+                            `
+                            : `
+                                <span class="apply-unavailable">
+                                    Application link unavailable
+                                </span>
+                            `
+                        }
+
+                    </div>
+
+                </article>
+            `;
+
+        }).join("");
+    }
+
+
+    function getApplyLink(job) {
+
+        if (
+            Array.isArray(job.apply_options) &&
+            job.apply_options.length > 0
+        ) {
+
+            for (const option of job.apply_options) {
+
+                if (option && option.link) {
+                    return option.link;
+                }
+
+            }
+        }
+
+        return (
+            job.share_link ||
+            job.link ||
+            job.url ||
+            ""
+        );
+    }
+
+
     function escapeHTML(value) {
 
         return String(value)
@@ -276,7 +443,12 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
 
+
+    function escapeAttribute(value) {
+
+        return escapeHTML(value);
     }
 
 });
