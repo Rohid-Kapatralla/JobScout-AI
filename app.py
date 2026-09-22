@@ -163,7 +163,7 @@ def calculate_match(
     job_set = {s.lower() for s in job_skills}
 
     if not job_set:
-        return 0, [], []
+       return 0, [], []
 
     matched = sorted(user_set.intersection(job_set))
     missing = sorted(job_set.difference(user_set))
@@ -589,6 +589,7 @@ def analyze_job(
 def analyze_jobs(
     jobs: list[dict],
     user_skills: list[str],
+    preferred_experience: str | None = None,
 ) -> list[dict]:
 
     analyzed = [
@@ -600,19 +601,93 @@ def analyze_jobs(
         if isinstance(job, dict)
     ]
 
-    analyzed.sort(
-        key=lambda item: (
-            item.get(
-                "match_score",
-                0,
-            ),
-            item.get(
-                "title",
-                "",
-            ),
-        ),
-        reverse=True,
+    experience = (
+        (preferred_experience or "")
+        .strip()
+        .lower()
     )
+
+    if experience:
+        fresher_requested = any(
+            word in experience
+            for word in [
+                "fresher",
+                "entry",
+                "graduate",
+                "trainee",
+                "intern",
+            ]
+        )
+
+        if fresher_requested:
+
+            def experience_priority(item: dict) -> int:
+                text = " ".join(
+                    [
+                        str(item.get("title", "")),
+                        str(item.get("description", "")),
+                    ]
+                ).lower()
+
+                # Clearly experienced roles should be ranked lower.
+                import re
+
+                year_matches = re.findall(
+                    r"(\d+)\+?\s*(?:years?|yrs?)",
+                    text,
+                )
+
+                if any(int(year) >= 2 for year in year_matches):
+                    return 2
+
+                # Roles explicitly welcoming freshers
+                # should be ranked higher.
+                fresher_words = [
+                    "fresher",
+                    "freshers",
+                    "entry level",
+                    "entry-level",
+                    "graduate",
+                    "trainee",
+                    "intern",
+                    "0-1 years",
+                    "0 to 1 year",
+                ]
+
+                if any(
+                    word in text
+                    for word in fresher_words
+                ):
+                    return 0
+
+                # No clear experience information.
+                return 1
+
+            analyzed.sort(
+                key=lambda item: (
+                    experience_priority(item),
+                    -item.get("match_score", 0),
+                    item.get("title", ""),
+                )
+            )
+
+        else:
+            analyzed.sort(
+                key=lambda item: (
+                    item.get("match_score", 0),
+                    item.get("title", ""),
+                ),
+                reverse=True,
+            )
+
+    else:
+        analyzed.sort(
+            key=lambda item: (
+                item.get("match_score", 0),
+                item.get("title", ""),
+            ),
+            reverse=True,
+        )
 
     return analyzed
 
@@ -835,6 +910,7 @@ def agent_search():
         analyzed_jobs = analyze_jobs(
             search_result["jobs"],
             user_skills,
+            plan.experience_level,
         )
 
         # SerpApi outage is returned gracefully.
