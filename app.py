@@ -380,11 +380,9 @@ Rules:
 
         return create_fallback_plan(user_request)
 
-
 def build_search_query(
     plan: JobSearchPlan,
 ) -> str:
-
     role = (
         normalize_text(plan.job_role)
         or "Software Developer"
@@ -392,37 +390,23 @@ def build_search_query(
 
     parts = [role]
 
-    if plan.experience_level:
-
-        experience = (
-            plan.experience_level.lower()
-        )
-
-        if any(
-            word in experience
-            for word in [
-                "fresher",
-                "entry",
-                "graduate",
-                "trainee",
-            ]
-        ):
-            parts.append("Fresher / Entry Level")
+    # Do not add "Fresher", "Entry Level", etc.
+    # directly to the Google Jobs query because
+    # Google Jobs may return zero results for
+    # overly specific experience wording.
+    # The experience requirement is still preserved
+    # in the AI search plan and shown to the user.
 
     for skill in plan.skills[:4]:
-
         skill = normalize_text(skill)
 
         if (
             skill
-            and skill.lower()
-            not in role.lower()
+            and skill.lower() not in role.lower()
         ):
             parts.append(skill)
 
-    query = " ".join(parts)
-
-    return query[:180]
+    return " ".join(parts)
 
 
 # =========================================================
