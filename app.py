@@ -383,31 +383,60 @@ Rules:
 def build_search_query(
     plan: JobSearchPlan,
 ) -> str:
-    role = (
-        normalize_text(plan.job_role)
-        or "Software Developer"
+    role = normalize_text(plan.job_role)
+
+    experience = (
+        normalize_text(
+            plan.experience_level
+        )
+        if plan.experience_level
+        else ""
+    ).lower()
+
+    fresher_requested = any(
+        word in experience
+        for word in [
+            "fresher",
+            "entry",
+            "graduate",
+            "trainee",
+            "intern",
+        ]
     )
 
-    parts = [role]
+    # Use the main role/skill instead of an overly
+    # specific AI-generated role title.
+    role_lower = role.lower()
 
-    # Do not add "Fresher", "Entry Level", etc.
-    # directly to the Google Jobs query because
-    # Google Jobs may return zero results for
-    # overly specific experience wording.
-    # The experience requirement is still preserved
-    # in the AI search plan and shown to the user.
+    if "python" in role_lower:
+        search_role = "Python"
+    elif "java" in role_lower:
+        search_role = "Java"
+    elif "javascript" in role_lower:
+        search_role = "JavaScript"
+    elif "frontend" in role_lower:
+        search_role = "Frontend Developer"
+    elif "backend" in role_lower:
+        search_role = "Backend Developer"
+    elif "data" in role_lower:
+        search_role = "Data Analyst"
+    elif "machine learning" in role_lower:
+        search_role = "Machine Learning"
+    elif "ai" in role_lower:
+        search_role = "AI"
+    else:
+        search_role = role
 
-    for skill in plan.skills[:4]:
-        skill = normalize_text(skill)
+    parts = [search_role]
 
-        if (
-            skill
-            and skill.lower() not in role.lower()
-        ):
-            parts.append(skill)
+    if fresher_requested:
+        parts.append("fresher")
 
-    return " ".join(parts)
-
+    return " ".join(
+        part
+        for part in parts
+        if part
+    )
 
 # =========================================================
 # SERPAPI
@@ -590,6 +619,7 @@ def analyze_jobs(
     jobs: list[dict],
     user_skills: list[str],
     preferred_experience: str | None = None,
+    preferred_location: str | None = None,
 ) -> list[dict]:
 
     analyzed = [
@@ -607,6 +637,132 @@ def analyze_jobs(
         .lower()
     )
 
+    requested_location = (
+        (preferred_location or "")
+        .strip()
+        .lower()
+    )
+
+    def location_priority(item: dict) -> int:
+        """
+        Rank jobs according to the requested location.
+
+        0 = exact requested city
+        1 = remote / work from home
+        2 = other location
+        """
+
+        if not requested_location:
+            return 1
+
+        job_location = str(
+            item.get("location", "")
+        ).strip().lower()
+
+        if not job_location:
+            return 2
+
+        location_aliases = {
+            "bengaluru": {
+                "bengaluru",
+                "bangalore",
+            },
+            "bangalore": {
+                "bengaluru",
+                "bangalore",
+            },
+            "hyderabad": {
+                "hyderabad",
+                "secunderabad",
+            },
+            "delhi": {
+                "delhi",
+                "new delhi",
+                "delhi ncr",
+            },
+            "mumbai": {
+                "mumbai",
+                "bombay",
+            },
+            "kolkata": {
+                "kolkata",
+                "calcutta",
+            },
+            "chennai": {
+                "chennai",
+                "madras",
+            },
+            "pune": {
+                "pune",
+            },
+        }
+
+        aliases = location_aliases.get(
+            requested_location,
+            {requested_location},
+        )
+
+        if any(
+            alias in job_location
+            for alias in aliases
+        ):
+            return 0
+
+        if any(
+            word in job_location
+            for word in [
+                "remote",
+                "work from home",
+                "anywhere",
+            ]
+        ):
+            return 1
+
+        return 2
+
+    def experience_priority(item: dict) -> int:
+        """
+        Rank fresher-friendly jobs before experienced roles.
+        """
+
+        text = " ".join(
+            [
+                str(item.get("title", "")),
+                str(item.get("description", "")),
+            ]
+        ).lower()
+
+        year_matches = re.findall(
+            r"(\d+)\+?\s*(?:years?|yrs?)",
+            text,
+        )
+
+        if any(
+            int(year) >= 2
+            for year in year_matches
+        ):
+            return 2
+
+        fresher_words = [
+            "fresher",
+            "freshers",
+            "entry level",
+            "entry-level",
+            "graduate",
+            "trainee",
+            "intern",
+            "0-1 years",
+            "0 to 1 year",
+        ]
+
+        if any(
+            word in text
+            for word in fresher_words
+        ):
+            return 0
+
+        return 1
+
     if experience:
         fresher_requested = any(
             word in experience
@@ -618,79 +774,50 @@ def analyze_jobs(
                 "intern",
             ]
         )
+    else:
+        fresher_requested = False
 
-        if fresher_requested:
-
-            def experience_priority(item: dict) -> int:
-                text = " ".join(
-                    [
-                        str(item.get("title", "")),
-                        str(item.get("description", "")),
-                    ]
-                ).lower()
-
-                # Clearly experienced roles should be ranked lower.
-                import re
-
-                year_matches = re.findall(
-                    r"(\d+)\+?\s*(?:years?|yrs?)",
-                    text,
-                )
-
-                if any(int(year) >= 2 for year in year_matches):
-                    return 2
-
-                # Roles explicitly welcoming freshers
-                # should be ranked higher.
-                fresher_words = [
-                    "fresher",
-                    "freshers",
-                    "entry level",
-                    "entry-level",
-                    "graduate",
-                    "trainee",
-                    "intern",
-                    "0-1 years",
-                    "0 to 1 year",
-                ]
-
-                if any(
-                    word in text
-                    for word in fresher_words
-                ):
-                    return 0
-
-                # No clear experience information.
-                return 1
-
-            analyzed.sort(
-                key=lambda item: (
-                    experience_priority(item),
-                    -item.get("match_score", 0),
-                    item.get("title", ""),
-                )
-            )
-
-        else:
-            analyzed.sort(
-                key=lambda item: (
-                    item.get("match_score", 0),
-                    item.get("title", ""),
+    if fresher_requested:
+        analyzed.sort(
+            key=lambda item: (
+                location_priority(item),
+                experience_priority(item),
+                -int(
+                    item.get(
+                        "match_score",
+                        0,
+                    )
+                    or 0
                 ),
-                reverse=True,
+                str(
+                    item.get(
+                        "title",
+                        "",
+                    )
+                ).lower(),
             )
-
+        )
     else:
         analyzed.sort(
             key=lambda item: (
-                item.get("match_score", 0),
-                item.get("title", ""),
-            ),
-            reverse=True,
+                location_priority(item),
+                -int(
+                    item.get(
+                        "match_score",
+                        0,
+                    )
+                    or 0
+                ),
+                str(
+                    item.get(
+                        "title",
+                        "",
+                    )
+                ).lower(),
+            )
         )
 
     return analyzed
-
 
 # =========================================================
 # ROUTES
@@ -908,10 +1035,11 @@ def agent_search():
         )
 
         analyzed_jobs = analyze_jobs(
-            search_result["jobs"],
-            user_skills,
-            plan.experience_level,
-        )
+    search_result["jobs"],
+    user_skills,
+    plan.experience_level,
+    plan.location,
+)
 
         # SerpApi outage is returned gracefully.
         return jsonify(
@@ -941,7 +1069,7 @@ def agent_search():
         # Never expose raw exception.
         print(
             "Agent search error: "
-            f"{type(error).__name__}"
+           f"{type(error).__name__}: {error}"
         )
 
         return jsonify(
